@@ -1,5 +1,7 @@
+//jesus save us!
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #define MAX_ROW 3
 #define MAX_COL 3
 #define MAX_SIZE 81
@@ -103,10 +105,172 @@ int  init_setup()
 
 		
 }
-void stabilize_block(int block_no)
+bool is_block_full(int block_n)
 {
-	//the params are the first row and col in that blocks....
+	int count=0;
+	int col=(block_n%3)*3;
+	int row=(block_n/3)*3;
+	int col_max=start_col+3;
+	int row_max=start_row+3;
+	for(;row<row_max;row++)
+		for(;col<col_max;col++)
+			if(matrix[row][col])
+				count++;
+	if(count==9)
+		return true;
+	return false;
+}
+void swap(int i,int j,int* array)
+{
+	int temp=array[i];
+	array[i]=array[j];
+	array[j]=temp;
+}
+int get_block_array(int block_n,int array,int r,int c)
+{
+	//populates array passed as second param 
+	//with the stable elements in 
+	//a blocknumber passed as first param
+	// and remaing free space with 0
+	//and returns the count 
 	
+	// the row and col are additional params....
+	// in some situvation we will not have the
+	// block number so we can pass row and col...
+	// but block number is the prefered ....
+	
+	int row,col,row_max,col_max,count;
+	if(block_n)
+	{
+		row=((int)(block_n/3))*3;
+		col=(block_n%3)*3;
+	}
+	else
+	{
+		row=r;col=c;	
+	}
+	row_max=row+3;
+	col_max=col+3;
+	for(int i=0;i<9;i++)
+		array[i]=0;
+	count=0;
+	for(;row<row_max;row++)
+		for(;col<col_max;col++)
+			if(matrix[row][col])
+			{
+				array[count]=matrix[row][col];
+				count++;
+			}
+	//sort upto count elements...
+	for(int i=0;i<count;i++)
+		for(int j=0;j<count;j++)
+			if(array[i]> array[j])
+				swap(i,j,array);
+
+	return count;
+
+
+	
+}
+void stabilize_block(int block_n)
+{
+	//the idea is that if we want to add any number to a block 
+	//the number will be generally present in multiple blocks
+	//that come as horizontal or vertical neighbours....
+	if(is_block_full(int block_n))
+		return;
+	int n1[9],n2[9],n3[9],n4[9];
+	int * blob[4]={n1,n2,n3,n4};
+	int jazz=0,col;
+	int row=block_n/3;
+	int max=row+3;
+	int ans[]={0,0,0,0,0,0,0,0,0,0};
+	int min=999,prev_min,rep;
+	int tmp;int* tmp_ptr;
+
+	//horizontal
+	for(int i=row;i<max;i++)
+	{
+		if(i==block_n)
+			continue;
+		get_block_array(i,blob[jazz]);
+		jazz++;
+	}
+	//vertical
+	col=block_n%3;
+	max=col+7;
+	for(int i=col;i<max;i+=3)
+	{
+		if(i==block_n)
+			continue;
+		get_block_array(i,blob[jazz]);
+		jazz++;
+	}
+	//at this point we expect all contents of blob to be 
+	//poplated with corresponding elems from blocks....
+	
+	jazz=0;
+
+	//as each elemet in blob contains the 
+	//start of the array and as array is 
+	//non decreasing order... we can compare
+	//its first elements to get the common...
+	//on each iteration it selects the smallest 
+	//item... if  an item occurs muliple times we select it to ans
+	//on the start of next loop the perv min is removed...so next
+	//elem can take its place...
+	while(true)
+	{
+		prev_min=min;
+		min=999;rep=0;
+		//preset condition...
+		for(int j=0;j<4;j++)
+		{
+			tmp=*blob[j];
+			if(tmp==0)
+				continue;
+			if(tmp==prev_min)
+				blob[j]+=1;
+			if(tmp==min)
+			{
+				rep=1;
+				continue;
+			}
+			if(tmp<min)
+			{
+				rep=0;
+				min=blob[j];
+			}
+		}
+		if(min==999)
+			break;
+		if(rep==1)
+		{
+			ans[jazz]=min;
+			jazz++;rep=0;
+		}
+	}
+	//code below will get 
+	//rid of common elements between the current block and other blocks
+	get_block_array(block_n,n1);
+	tmp_ptr=ans;
+
+	while(*ans && *n1)
+	{
+		if(*ans ==*n1)
+		{
+			ans=999;
+			ans++;n1++;
+			continue;
+		}
+		if(*ans < *n1)
+			ans++;
+		else
+			n1++;
+	}
+
+	//logic to be continued....
+
 } 
 void print_success()
 {
@@ -132,6 +296,9 @@ void main()
 	do{
 	
 		count_prev=count;
+		//important code should sit here...
+		//call stablilze in spiral order 
+		//call rowate ,colate,blockate
 		if(count==81)
 		{
 			print_success();
