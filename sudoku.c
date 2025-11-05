@@ -107,6 +107,7 @@ int  init_setup()
 }
 bool is_block_full(int block_n)
 {
+	//returns true if block is full else no....
 	int count=0;
 	int col=(block_n%3)*3;
 	int row=(block_n/3)*3;
@@ -120,11 +121,39 @@ bool is_block_full(int block_n)
 		return true;
 	return false;
 }
+bool is_row_full(int row)
+{
+	int count=0;
+	for(int i=0;i<9;i++)
+		if(matrix[row][i])
+			count++;
+	if(count==9)
+		return true;
+	retrun false;
+}
+bool is_col_full(int col)
+{
+
+	int count=0;
+	for(int i=0;i<9;i++)
+		if(matrix[i][col])
+			count++;
+	if(count==9)
+		return true;
+	retrun false;
+}
 void swap(int i,int j,int* array)
 {
 	int temp=array[i];
 	array[i]=array[j];
 	array[j]=temp;
+}
+void insert_matrix(int row,int col,int val)
+{
+	//is_possible(int row,int col,int val);
+	unset_val_gen(int row,int col,int val);
+	matrix[row][col];
+
 }
 int get_block_array(int block_n,int array,int r,int c)
 {
@@ -269,9 +298,24 @@ void stabilize_block(int block_n)
 			n1++;
 	}
 
-	//logic to be continued....
-
+	//at this point we have all common elements removed,replaced by 999 
+	//tmp_ptr points to the begining.... now we have to try to fill 
+	//each of the elems to all free blocks in a block.....
+	
 } 
+void colate(int col)
+{
+
+}
+void rowate(int row)
+{
+
+}
+void blockate(int block )
+{
+
+}
+
 void print_success()
 {
 	printf("puzzle solved!");
@@ -299,6 +343,15 @@ void main()
 		//important code should sit here...
 		//call stablilze in spiral order 
 		//call rowate ,colate,blockate
+		for(int i=0;i<9;i++)
+			if(!is_row_full(i))
+				rowate(i);
+		for(int i=0;i<9;i++)
+			if(!is_col_full(i))
+				colate(i);
+		for(int i=0;i<9;i++)
+			if(!is_block_full(i))
+				blockate(i);	
 		if(count==81)
 		{
 			print_success();
