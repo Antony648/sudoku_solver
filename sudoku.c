@@ -11,6 +11,18 @@
 int matrix[MAX_ROW_COUNT][MAX_COL_COUNT];
 uint16_t top_bar[MAX_SIZE];
 
+void unset_value_gen(int row,int col,int val);
+void init_top_bar();
+int  init_setup();
+bool is_block_full(int block_n);
+bool is_row_full(int row);
+bool is_col_full(int col);
+void swap(int i,int j,int* array);
+void insert_matrix(int row,int col,int val);
+void is_possible(int row,int col,int val);
+int get_block_array(int block_n,int array,int r,int c);
+void stabilize_block(int block_n);
+
 void unset_value_gen(int row,int col,int val)
 {
 	//this function unsets all the values in top bar in all 
@@ -147,13 +159,58 @@ void swap(int i,int j,int* array)
 	int temp=array[i];
 	array[i]=array[j];
 	array[j]=temp;
+	return;
 }
+
 void insert_matrix(int row,int col,int val)
 {
 	//is_possible(int row,int col,int val);
 	unset_val_gen(int row,int col,int val);
 	matrix[row][col];
+	return;
+}
 
+
+void  get_blank_block(int block_n,int* array)
+{
+	//puts all block index value of 
+	//blank entries in a block...
+	for(int i=0;i<9;i++)
+		array[i]=0;
+	//fill array with zero
+	int row=((int)block_n/3)*3;
+	int col=((int)block_n%3)*3;
+
+	//fill array with index numbers 
+	//of empty block
+	for(int i=0;i<3;i++)
+		for(int j=0;j<3;j++)
+			if(!matrix[row+i][col+j])
+			{
+				*array=(i*3)+j;
+				array++;
+			}
+	return;
+}
+bool is_possible(int row,int col,int val)
+{
+	//this function returns true if it is possible to place
+	//a value in that block	
+	for(int i=0;i<9;i++)
+	{
+		if(matrix[row][i]==val)
+			return false;
+		if(matrix[i][col]==val)
+			return false;
+	}
+	int row=((int) row/3)*3;
+	int col=((int)col/3)*3;
+	row+=3;col+=3; //set value to upper bounds 
+	for(int i=0;i<row;i++)
+		for(int j=0;j<col;j++)
+			if(matrix[i][j]== val)
+				return false;
+	return true;
 }
 int get_block_array(int block_n,int array,int r,int c)
 {
@@ -200,6 +257,21 @@ int get_block_array(int block_n,int array,int r,int c)
 
 
 	
+}
+
+void gen_row_col_block(int*row,int*col,int index,int block_n)
+{
+	//this function takes the index of a cell within a block
+	//and generates corresponding row and col as
+	//we cannot pass 2 values out.. need to fill values
+	//to pointers passed as param one and param 2
+	int row_b=((int) block_n/3)*3;
+	int col_b=((int) block_n%3)*3;
+	row_b+=((int) index/3);
+	col_b+=((int) index%3);
+	*row=row_b;
+	*col=col_b;
+	return;
 }
 void stabilize_block(int block_n)
 {
@@ -282,6 +354,7 @@ void stabilize_block(int block_n)
 	//code below will get 
 	//rid of common elements between the current block and other blocks
 	get_block_array(block_n,n1);
+
 	tmp_ptr=ans;
 
 	while(*ans && *n1)
@@ -301,19 +374,68 @@ void stabilize_block(int block_n)
 	//at this point we have all common elements removed,replaced by 999 
 	//tmp_ptr points to the begining.... now we have to try to fill 
 	//each of the elems to all free blocks in a block.....
+	//insert_matrix(row,col,val)
+	//gen_row_col_block(*row,*col,index,block_n)
+	//bool is_possible(int row,int col,int val)
+	get_blank_block(block_n,n2);
+	int count=0,change=1,rtn;
+	while(change)
+	{
+		change=0;
+		for(int i=0;ans[i]!=0;i++)
+		{
+			count=0;	
+			if(ans[i]==999)
+				continue;
+			//take a value from ans and try to fill it 
+			//every single free cell of block
+			for(int j=0;n1[j]!=0;j++)
+			{
+				
+				if(n1[j]==999)
+					continue;
+				gen_row_col_block(&row,&col,n1[j],block_n);
+				if(is_possible(row,col,ans[i]))
+				{
+					count++;rtn=j;
+					if(count >1)
+						break;
+				}		
+				
+			}
+			if(count==1)
+			{
+				//only one possible location ans[i] for value in 
+				//the block and it is  in n1[rtn]
+				gen_row_col(&row,&col,n1[rtn],block_n);
+				insert_matrix(row,col,ans[i]);
+				ans[i]=999;n1[rtn]=999;
+				change=1;	//shows that atleast one value was added in this attempt
+				
+			}
+		}
+
+	}
+	return;
 	
 } 
 void colate(int col)
 {
+	//try to fill missing
+	//elements based on column
 
 }
 void rowate(int row)
 {
+	//try to fill missing elements 
+	//based on rowate
 
 }
-void blockate(int block )
+void blockate(int block_n)
 {
-
+	//try to fill missing elements 
+	//based on missing values from 
+	//row
 }
 
 void print_success()
