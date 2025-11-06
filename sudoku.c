@@ -176,8 +176,8 @@ void  get_blank_block(int block_n,int* array)
 	//puts all block index value of 
 	//blank entries in a block...
 	for(int i=0;i<9;i++)
-		array[i]=0;
-	//fill array with zero
+		array[i]=800;
+	//fill array with 999
 	int row=((int)block_n/3)*3;
 	int col=((int)block_n%3)*3;
 
@@ -238,7 +238,7 @@ int get_block_array(int block_n,int array,int r,int c)
 	row_max=row+3;
 	col_max=col+3;
 	for(int i=0;i<9;i++)
-		array[i]=0;
+		array[i]=800;
 	count=0;
 	for(;row<row_max;row++)
 		for(;col<col_max;col++)
@@ -249,7 +249,7 @@ int get_block_array(int block_n,int array,int r,int c)
 			}
 	//sort upto count elements...
 	for(int i=0;i<count;i++)
-		for(int j=0;j<count;j++)
+		for(int j=i+1;j<count;j++)
 			if(array[i]> array[j])
 				swap(i,j,array);
 
@@ -285,7 +285,7 @@ void stabilize_block(int block_n)
 	int jazz=0,col;
 	int row=block_n/3;
 	int max=row+3;
-	int ans[]={0,0,0,0,0,0,0,0,0,0};
+	int ans[]={800,800,800,800,800,800,800,800,800,800};
 	int min=999,prev_min,rep;
 	int tmp;int* tmp_ptr;
 
@@ -294,7 +294,7 @@ void stabilize_block(int block_n)
 	{
 		if(i==block_n)
 			continue;
-		get_block_array(i,blob[jazz]);
+		get_block_array(i,blob[jazz],0,0);
 		jazz++;
 	}
 	//vertical
@@ -304,7 +304,7 @@ void stabilize_block(int block_n)
 	{
 		if(i==block_n)
 			continue;
-		get_block_array(i,blob[jazz]);
+		get_block_array(i,blob[jazz],0,0);
 		jazz++;
 	}
 	//at this point we expect all contents of blob to be 
@@ -328,7 +328,7 @@ void stabilize_block(int block_n)
 		for(int j=0;j<4;j++)
 		{
 			tmp=*blob[j];
-			if(tmp==0)
+			if(tmp==800)
 				continue;
 			if(tmp==prev_min)
 				blob[j]+=1;
@@ -353,7 +353,7 @@ void stabilize_block(int block_n)
 	}
 	//code below will get 
 	//rid of common elements between the current block and other blocks
-	get_block_array(block_n,n1);
+	get_block_array(block_n,n1,0,0);
 
 	tmp_ptr=ans;
 
@@ -382,14 +382,14 @@ void stabilize_block(int block_n)
 	while(change)
 	{
 		change=0;
-		for(int i=0;ans[i]!=0;i++)
+		for(int i=0;ans[i]!=800;i++)
 		{
-			count=0;	
 			if(ans[i]==999)
 				continue;
+			count=0;	
 			//take a value from ans and try to fill it 
 			//every single free cell of block
-			for(int j=0;n1[j]!=0;j++)
+			for(int j=0;n1[j]!=800;j++)
 			{
 				
 				if(n1[j]==999)
@@ -423,12 +423,115 @@ void colate(int col)
 {
 	//try to fill missing
 	//elements based on column
-
+	int ans[9]={800,800,800,800,800,800,800,800,800};
+	int n1[9]= {1,2,3,4,5,6,7,8,9};
+	int *tmp=ans;
+	int change=1;
+	for(int i=0;i<9;i++)
+		if(!matrix[i][col])
+		{
+			*tmp=i;
+			tmp++;
+		}
+		else
+			n1[matrix[i][col] -1]==800;
+	//can avoid this sorting is not requried 
+	//but if we sort we can put all 800 values 
+	//at end and during actual evaluation we
+	//can break if we hit 800
+	for(int i=0;i<9;i++)
+		for(int j=i+1;j<9;j++)
+			if(n1[i]> n1[j])
+				swap(i,j,n1);
+	//now ans contains all the possible locations and 
+	//n1 contains  all possible values
+	//the job is to try to fill missing blocks with
+	//missing values
+	int k,rtn;
+	while(change)
+	{
+		change=0;
+		for(int i=0;n1[i]!=800;i++)
+		{
+			if(n1[i]==999)
+				continue;
+			k=0;
+			for(int j=0;ans[j]==800;j++)
+			{
+				if(is_possible(ans[j],col,n1[i]))
+				{
+					k++;rtn=j;
+					if(k>1)
+						break;
+				}
+			}
+			if(k==1)
+			{
+				insert_matrix(ans[rtn],col,n1[i]);
+				ans[rtn]=900;n1[i]=999;				
+				change=1;
+			}
+		}
+	}
+	return;
+	
 }
 void rowate(int row)
 {
 	//try to fill missing elements 
 	//based on rowate
+	int ans[9]={800,800,800,800,800,800,800,800,800};
+	int n1[9]= {1,2,3,4,5,6,7,8,9};
+	int *tmp=ans;
+	int change=1;
+	for(int i=0;i<9;i++)
+		if(!matrix[row][i])
+		{
+			*tmp=i;
+			tmp++;
+		}
+		else
+			n1[matrix[row][i] -1]==800;
+	//can avoid this sorting is not requried 
+	//but if we sort we can put all 800 values 
+	//at end and during actual evaluation we
+	//can break if we hit 800
+	for(int i=0;i<9;i++)
+		for(int j=i+1;j<9;j++)
+			if(n1[i]> n1[j])
+				swap(i,j,n1);
+	//now ans contains all the possible locations and 
+	//n1 contains  all possible values
+	//the job is to try to fill missing blocks with
+	//missing values
+	int k,rtn;
+	while(change)
+	{
+		change=0;
+		for(int i=0;n1[i]!=800;i++)
+		{
+			if(n1[i]==999)
+				continue;
+			k=0;
+			for(int j=0;ans[j]==800;j++)
+			{
+				if(is_possible(row,ans[j],n1[i]))
+				{
+					k++;rtn=j;
+					if(k>1)
+						break;
+				}
+			}
+			if(k==1)
+			{
+				insert_matrix(row,ans[rtn],n1[i]);
+				ans[rtn]=999;n1[i]=999;				
+				change=1;
+			}
+		}
+	}
+	return;
+	
 
 }
 void blockate(int block_n)
