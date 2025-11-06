@@ -20,8 +20,15 @@ bool is_col_full(int col);
 void swap(int i,int j,int* array);
 void insert_matrix(int row,int col,int val);
 void is_possible(int row,int col,int val);
+
 int get_block_array(int block_n,int array,int r,int c);
+void  get_blank_block(int block_n,int* array);
+void fill_block_on_array(int* ans,int block_n);
+
 void stabilize_block(int block_n);
+void rowate(int row);
+void colate(int col);
+void blockate(int block_n);
 
 void unset_value_gen(int row,int col,int val)
 {
@@ -273,6 +280,51 @@ void gen_row_col_block(int*row,int*col,int index,int block_n)
 	*col=col_b;
 	return;
 }
+void fill_block_on_array(int* ans,int block_n)
+{
+
+	int n2[9];
+	int row,col;
+	get_blank_block(block_n,n2);
+	int count=0,change=1,rtn;
+	while(change)
+	{
+		change=0;
+		for(int i=0;ans[i]!=800;i++)
+		{
+			if(ans[i]==999)
+				continue;
+			count=0;	
+			//take a value from ans and try to fill it 
+			//every single free cell of block
+			for(int j=0;n1[j]!=800;j++)
+			{
+				
+				if(n1[j]==999)
+					continue;
+				gen_row_col_block(&row,&col,n1[j],block_n);
+				if(is_possible(row,col,ans[i]))
+				{
+					count++;rtn=j;
+					if(count >1)
+						break;
+				}		
+				
+			}
+			if(count==1)
+			{
+				//only one possible location ans[i] for value in 
+				//the block and it is  in n1[rtn]
+				gen_row_col(&row,&col,n1[rtn],block_n);
+				insert_matrix(row,col,ans[i]);
+				ans[i]=999;n1[rtn]=999;
+				change=1;	//shows that atleast one value was added in this attempt
+				
+			}
+		}
+
+	}
+}
 void stabilize_block(int block_n)
 {
 	//the idea is that if we want to add any number to a block 
@@ -377,45 +429,7 @@ void stabilize_block(int block_n)
 	//insert_matrix(row,col,val)
 	//gen_row_col_block(*row,*col,index,block_n)
 	//bool is_possible(int row,int col,int val)
-	get_blank_block(block_n,n2);
-	int count=0,change=1,rtn;
-	while(change)
-	{
-		change=0;
-		for(int i=0;ans[i]!=800;i++)
-		{
-			if(ans[i]==999)
-				continue;
-			count=0;	
-			//take a value from ans and try to fill it 
-			//every single free cell of block
-			for(int j=0;n1[j]!=800;j++)
-			{
-				
-				if(n1[j]==999)
-					continue;
-				gen_row_col_block(&row,&col,n1[j],block_n);
-				if(is_possible(row,col,ans[i]))
-				{
-					count++;rtn=j;
-					if(count >1)
-						break;
-				}		
-				
-			}
-			if(count==1)
-			{
-				//only one possible location ans[i] for value in 
-				//the block and it is  in n1[rtn]
-				gen_row_col(&row,&col,n1[rtn],block_n);
-				insert_matrix(row,col,ans[i]);
-				ans[i]=999;n1[rtn]=999;
-				change=1;	//shows that atleast one value was added in this attempt
-				
-			}
-		}
-
-	}
+	fill_block_on_array(ans,block_n);
 	return;
 	
 } 
@@ -538,7 +552,12 @@ void blockate(int block_n)
 {
 	//try to fill missing elements 
 	//based on missing values from 
-	//row
+	int ans[9]={800,800,800,800,800, 800,800, 800,800, };
+	//remove elements based on block index and call
+	//write logic here....
+	fill_block_on_array(ans,block_n);
+	return;
+	
 }
 
 void print_success()
