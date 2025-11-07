@@ -19,9 +19,10 @@ bool is_row_full(int row);
 bool is_col_full(int col);
 void swap(int i,int j,int* array);
 void insert_matrix(int row,int col,int val);
-void is_possible(int row,int col,int val);
+bool is_possible(int row,int col,int val);
+bool is_possible_cell(int row,int col,int val);
 
-int get_block_array(int block_n,int array,int r,int c);
+int get_block_array(int block_n,int* array,int r,int c);
 void  get_blank_block(int block_n,int* array);
 void fill_block_on_array(int* ans,int block_n);
 void gen_row_col_block(int*row,int*col,int index,int block_n);
@@ -79,7 +80,7 @@ void unset_value_gen(int row,int col,int val)
 	//for cols
 	row_gen=0;
 	row_max=MAX_ROW_COUNT;
-	col_sub=((int)row/MAX_ROW)*MAX_ROW;//first row in the block was aldready modified
+	int row_sub=((int)row/MAX_ROW)*MAX_ROW;//first row in the block was aldready modified
 	for(;row_gen<row_max;row_gen++)
 	{
 		if(row_gen==row_sub)
@@ -125,14 +126,23 @@ int  init_setup()
 
 		
 }
+bool is_possible_cell(int row,int col,int value)
+{
+	uint16_t syndrome=top_bar[(row*9)+col];
+	uint16_t target=0x01;
+	target<<=(value-1);
+	if(syndrome & value)
+		return true;
+	return false;
+}
 bool is_block_full(int block_n)
 {
 	//returns true if block is full else no....
 	int count=0;
 	int col=(block_n%3)*3;
 	int row=(block_n/3)*3;
-	int col_max=start_col+3;
-	int row_max=start_row+3;
+	int col_max=col+3;
+	int row_max=row+3;
 	for(;row<row_max;row++)
 		for(;col<col_max;col++)
 			if(matrix[row][col])
@@ -149,7 +159,7 @@ bool is_row_full(int row)
 			count++;
 	if(count==9)
 		return true;
-	retrun false;
+	return false;
 }
 bool is_col_full(int col)
 {
@@ -160,7 +170,7 @@ bool is_col_full(int col)
 			count++;
 	if(count==9)
 		return true;
-	retrun false;
+	return false;
 }
 void swap(int i,int j,int* array)
 {
@@ -173,8 +183,8 @@ void swap(int i,int j,int* array)
 void insert_matrix(int row,int col,int val)
 {
 	//is_possible(int row,int col,int val);
-	unset_val_gen(int row,int col,int val);
-	matrix[row][col];
+	unset_value_gen(row,col,val);
+	matrix[row][col]=val;
 	return;
 }
 
@@ -186,9 +196,10 @@ void  get_blank_block(int block_n,int* array)
 	for(int i=0;i<9;i++)
 		array[i]=800;
 	//fill array with 999
-	int row=((int)block_n/3)*3;
-	int col=((int)block_n%3)*3;
-
+	//int row=((int)block_n/3)*3;
+	//int col=((int)block_n%3)*3;
+	int row,col;
+	gen_row_col_block(&row,&col,0,block_n);
 	//fill array with index numbers 
 	//of empty block
 	for(int i=0;i<3;i++)
@@ -211,16 +222,16 @@ bool is_possible(int row,int col,int val)
 		if(matrix[i][col]==val)
 			return false;
 	}
-	int row=((int) row/3)*3;
-	int col=((int)col/3)*3;
-	row+=3;col+=3; //set value to upper bounds 
+	int row_max=((int) row/3)*3;
+	int col_max=((int)col/3)*3;
+	row_max+=3;col_max+=3; //set value to upper bounds 
 	for(int i=0;i<row;i++)
 		for(int j=0;j<col;j++)
 			if(matrix[i][j]== val)
 				return false;
 	return true;
 }
-int get_block_array(int block_n,int array,int r,int c)
+int get_block_array(int block_n,int* array,int r,int c)
 {
 	//populates array passed as second param 
 	//with the stable elements in 
@@ -298,12 +309,12 @@ void fill_block_on_array(int* ans,int block_n)
 			count=0;	
 			//take a value from ans and try to fill it 
 			//every single free cell of block
-			for(int j=0;n1[j]!=800;j++)
+			for(int j=0;n2[j]!=800;j++)
 			{
 				
-				if(n1[j]==999)
+				if(n2[j]==999)
 					continue;
-				gen_row_col_block(&row,&col,n1[j],block_n);
+				gen_row_col_block(&row,&col,n2[j],block_n);
 				if(is_possible(row,col,ans[i]))
 				{
 					count++;rtn=j;
@@ -316,9 +327,11 @@ void fill_block_on_array(int* ans,int block_n)
 			{
 				//only one possible location ans[i] for value in 
 				//the block and it is  in n1[rtn]
-				gen_row_col(&row,&col,n1[rtn],block_n);
+				gen_row_col_block(&row,&col,n2[rtn],block_n);
+
+				is_possible_cell(row,col,ans[i]);
 				insert_matrix(row,col,ans[i]);
-				ans[i]=999;n1[rtn]=999;
+				ans[i]=999;n2[rtn]=999;
 				change=1;	//shows that atleast one value was added in this attempt
 				
 			}
@@ -331,7 +344,7 @@ void stabilize_block(int block_n)
 	//the idea is that if we want to add any number to a block 
 	//the number will be generally present in multiple blocks
 	//that come as horizontal or vertical neighbours....
-	if(is_block_full(int block_n))
+	if(is_block_full(block_n))
 		return;
 	int n1[9],n2[9],n3[9],n4[9];
 	int * blob[4]={n1,n2,n3,n4};
@@ -393,7 +406,7 @@ void stabilize_block(int block_n)
 			if(tmp<min)
 			{
 				rep=0;
-				min=blob[j];
+				min=*blob[j];
 			}
 		}
 		if(min==999)
@@ -409,19 +422,19 @@ void stabilize_block(int block_n)
 	get_block_array(block_n,n1,0,0);
 
 	tmp_ptr=ans;
-
-	while(*ans && *n1)
+ 	int* tmp_ptr2=n1;
+	while(*tmp_ptr && *tmp_ptr2)
 	{
-		if(*ans ==*n1)
+		if(*tmp_ptr==*tmp_ptr2)
 		{
-			ans=999;
-			ans++;n1++;
+			*tmp_ptr=999;
+			tmp_ptr+=1;tmp_ptr2++;
 			continue;
 		}
 		if(*ans < *n1)
-			ans++;
+			tmp_ptr++;
 		else
-			n1++;
+			tmp_ptr2++;
 	}
 
 	//at this point we have all common elements removed,replaced by 999 
@@ -438,6 +451,8 @@ void colate(int col)
 {
 	//try to fill missing
 	//elements based on column
+	if(is_col_full(col))
+		return;
 	int ans[9]={800,800,800,800,800,800,800,800,800};
 	int n1[9]= {1,2,3,4,5,6,7,8,9};
 	int *tmp=ans;
@@ -473,7 +488,7 @@ void colate(int col)
 			k=0;
 			for(int j=0;ans[j]==800;j++)
 			{
-				if(is_possible(ans[j],col,n1[i]))
+				if(is_possible_cell(ans[j],col,n1[i]))
 				{
 					k++;rtn=j;
 					if(k>1)
@@ -495,6 +510,8 @@ void rowate(int row)
 {
 	//try to fill missing elements 
 	//based on rowate
+	if(is_row_full(row))
+		return;
 	int ans[9]={800,800,800,800,800,800,800,800,800};
 	int n1[9]= {1,2,3,4,5,6,7,8,9};
 	int *tmp=ans;
@@ -530,7 +547,7 @@ void rowate(int row)
 			k=0;
 			for(int j=0;ans[j]==800;j++)
 			{
-				if(is_possible(row,ans[j],n1[i]))
+				if(is_possible_cell(row,ans[j],n1[i]))
 				{
 					k++;rtn=j;
 					if(k>1)
@@ -587,7 +604,7 @@ void main()
 	printf("welcome to sudoku...");
 	int count,count_prev;
 	count=init_setup();
-	count_perv=count;
+	count_prev=count;
 	//loop is designed to terminate if all blocks are full or if a 
 	//single itreation did not contribute even a single value to
 	//sudoku....
@@ -606,7 +623,7 @@ void main()
 				i=5;
 				continue;
 			}
-			stablize_block(i);	
+			stabilize_block(i);	
 		}
 		//call rowate ,colate,blockate
 		for(int i=0;i<9;i++)
