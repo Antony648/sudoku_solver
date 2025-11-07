@@ -24,6 +24,7 @@ void is_possible(int row,int col,int val);
 int get_block_array(int block_n,int array,int r,int c);
 void  get_blank_block(int block_n,int* array);
 void fill_block_on_array(int* ans,int block_n);
+void gen_row_col_block(int*row,int*col,int index,int block_n);
 
 void stabilize_block(int block_n);
 void rowate(int row);
@@ -552,9 +553,18 @@ void blockate(int block_n)
 {
 	//try to fill missing elements 
 	//based on missing values from 
-	int ans[9]={800,800,800,800,800, 800,800, 800,800, };
+	int ans[9]={1,2,3,4,5,6,7,8,9 };
 	//remove elements based on block index and call
-	//write logic here....
+	int row,col,row_max,col_max;
+	gen_row_col_block(&row,&col,0,block_n);
+	row_max=row+3;col_max=col+3;
+
+	for(;row<row_max;row++)
+		for(;col<col_max;col++)
+			if(matrix[row][col])
+				ans[matrix[row][col]-1]=999;
+	//destroys values aldready in the block
+
 	fill_block_on_array(ans,block_n);
 	return;
 	
@@ -586,6 +596,18 @@ void main()
 		count_prev=count;
 		//important code should sit here...
 		//call stablilze in spiral order 
+		for(int i=0;i<9;i++)
+		{
+			if(i==3)
+			{
+				stabilize_block(5);
+				stabilize_block(4);
+				stabilize_block(3);
+				i=5;
+				continue;
+			}
+			stablize_block(i);	
+		}
 		//call rowate ,colate,blockate
 		for(int i=0;i<9;i++)
 			if(!is_row_full(i))
