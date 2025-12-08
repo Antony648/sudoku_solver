@@ -8,8 +8,11 @@
 #define MAX_ROW_COUNT 9
 #define MAX_COL_COUNT 9
 
-int matrix[MAX_ROW_COUNT][MAX_COL_COUNT];
+int matrix[MAX_ROW_COUNT][MAX_COL_COUNT]=
+{{0,7,0,5,8,3,0,2,0},{0,5,0,2,0,0,3,0,0},{3,4,0,0,0,6,5,0,7},{7,9,0,0,0,0,6,3,2},{0,0,0,6,9,7,1,0,0},{6,8,0,0,0,2,7,0,0},{9,1,0,8,3,5,0,7,6},{0,3,0,7,0,1,4,9,5},{5,6,0,4,2,9,0,1,3}
+};
 uint16_t top_bar[MAX_SIZE];
+int global_count=0;
 
 void unset_value_gen(int row,int col,int val);
 void init_top_bar();
@@ -44,52 +47,55 @@ void unset_value_gen(int row,int col,int val)
 	syndrome<<=(val-1);
 	syndrome^=0xffff;
 	int row_gen=((int) row/MAX_ROW)*MAX_ROW;//get start row
-	int col_gen=((int) col/MAX_COL)*MAX_COL; //get start col
+	int col_gen=((int) col/MAX_COL)*MAX_COL; //get start col  chg#1
 	int row_max=row_gen+MAX_ROW;
 	int col_max=col_gen+MAX_COL;
 	
-	for(;row_gen<row_max;row_gen++)
-		for(;col_gen<col_max;col_gen++)
+	for(int i=row_gen;i<row_max;i++)	//i for proper control chg#3
+		for(int j=col_gen;j<col_max;j++)	//j for proper control chg#4
 		{
-			value_tb=top_bar[(row_gen*MAX_ROW_COUNT)+col_gen];
-			if(value_tb)
+			value_tb=top_bar[(i*MAX_ROW_COUNT)+j];
+			if(!value_tb)   //if value_tb is aldready null no need to change it chg#2
 				continue;
 			value_tb&=syndrome;
-			top_bar[(row_gen*MAX_ROW_COUNT)+col_gen]=value_tb;
+			top_bar[(i*MAX_ROW_COUNT)+j]=value_tb;
 		}
 	//for rows	
 	row_gen=row;
 	col_gen=0;
-	col_max=MAX_COL_COUNT;
-	int col_sub=((int)col/MAX_COL)*MAX_COL;//first column  in the block that was aldready 
+	//int col_sub=((int)col/MAX_COL)*MAX_COL;//first column  in the block that was aldready 
 					       //modified
+	int col_sub=col_max-3;	//chg#6
+	col_max=MAX_COL_COUNT;
 	for(;col_gen<col_max;col_gen++)
 	{
 		if(col_gen ==col_sub)
 		{			//if we encounter the the aldready modified
 					//column... so we jump 3 columns
-			col_gen+=3; 
+			col_gen+=2; 
 			continue;
 		}
 		value_tb=top_bar[(row_gen*MAX_ROW_COUNT)+col_gen];
-		if(value_tb)
+		if(!value_tb)	//chg#5
 			continue;
 		value_tb&=syndrome;
 		top_bar[(row_gen*MAX_ROW_COUNT)+col_gen]=value_tb;
 	}
 	//for cols
+	col_gen=col;
 	row_gen=0;
+	int row_sub=row_max-3;	//chg#8
 	row_max=MAX_ROW_COUNT;
-	int row_sub=((int)row/MAX_ROW)*MAX_ROW;//first row in the block was aldready modified
+	//int row_sub=((int)row/MAX_ROW)*MAX_ROW;//first row in the block was aldready modified
 	for(;row_gen<row_max;row_gen++)
 	{
 		if(row_gen==row_sub)
 		{
-			row_gen+=3;
+			row_gen+=2;
 			continue;
 		}
 		value_tb=top_bar[(row_gen*MAX_ROW_COUNT)+col_gen];
-		if(value_tb)
+		if(!value_tb)		//chg#7
 			continue;
 		value_tb&=syndrome;
 		top_bar[(row_gen*MAX_ROW_COUNT)+col_gen]=value_tb;
@@ -185,6 +191,7 @@ void insert_matrix(int row,int col,int val)
 	//is_possible(int row,int col,int val);
 	unset_value_gen(row,col,val);
 	matrix[row][col]=val;
+	global_count++;
 	return;
 }
 
@@ -295,7 +302,7 @@ void gen_row_col_block(int*row,int*col,int index,int block_n)
 void fill_block_on_array(int* ans,int block_n)
 {
 
-	int n2[9];
+	int n2[10]={800,800,800,800,800,800,800,800,800,800}; //chg#15
 	int row,col;
 	get_blank_block(block_n,n2);
 	int count=0,change=1,rtn;
@@ -365,7 +372,7 @@ void stabilize_block(int block_n)
 	}
 	//vertical
 	col=block_n%3;
-	max=col+7;
+	max=col+3; //chg#9
 	for(int i=col;i<max;i+=3)
 	{
 		if(i==block_n)
@@ -386,10 +393,11 @@ void stabilize_block(int block_n)
 	//item... if  an item occurs muliple times we select it to ans
 	//on the start of next loop the perv min is removed...so next
 	//elem can take its place...
-	while(true)
+	int saver=0;//chg#10
+	while(saver<9)//chg#11
 	{
 		prev_min=min;
-		min=999;rep=0;
+		min=799;rep=0;
 		//preset condition...
 		for(int j=0;j<4;j++)
 		{
@@ -397,7 +405,10 @@ void stabilize_block(int block_n)
 			if(tmp==800)
 				continue;
 			if(tmp==prev_min)
+			{		
 				blob[j]+=1;
+				tmp=*blob[j];//chg#13
+			}
 			if(tmp==min)
 			{
 				rep=1;
@@ -406,16 +417,17 @@ void stabilize_block(int block_n)
 			if(tmp<min)
 			{
 				rep=0;
-				min=*blob[j];
+				min=tmp;
 			}
 		}
-		if(min==999)
+		if(min==799)
 			break;
 		if(rep==1)
 		{
 			ans[jazz]=min;
 			jazz++;rep=0;
 		}
+		saver++;//chg#12
 	}
 	//code below will get 
 	//rid of common elements between the current block and other blocks
@@ -423,7 +435,7 @@ void stabilize_block(int block_n)
 
 	tmp_ptr=ans;
  	int* tmp_ptr2=n1;
-	while(*tmp_ptr && *tmp_ptr2)
+	while(*tmp_ptr!=800 && *tmp_ptr2!=800)
 	{
 		if(*tmp_ptr==*tmp_ptr2)
 		{
@@ -453,8 +465,8 @@ void colate(int col)
 	//elements based on column
 	if(is_col_full(col))
 		return;
-	int ans[9]={800,800,800,800,800,800,800,800,800};
-	int n1[9]= {1,2,3,4,5,6,7,8,9};
+	int ans[10]={800,800,800,800,800,800,800,800,800,800};	//one elem extra to mark end for both chg#13
+	int n1[10]= {1,2,3,4,5,6,7,8,9,800};
 	int *tmp=ans;
 	int change=1;
 	for(int i=0;i<9;i++)
@@ -464,7 +476,7 @@ void colate(int col)
 			tmp++;
 		}
 		else
-			n1[matrix[i][col] -1]==800;
+			n1[matrix[i][col] -1]=800;
 	//can avoid this sorting is not requried 
 	//but if we sort we can put all 800 values 
 	//at end and during actual evaluation we
@@ -486,8 +498,12 @@ void colate(int col)
 			if(n1[i]==999)
 				continue;
 			k=0;
-			for(int j=0;ans[j]==800;j++)
+			for(int j=0;ans[j]!=800;j++)	//chg#14
 			{
+			//	printf("%d",ans[j]);
+				if(ans[j] == 900)	//chg#15
+					continue;
+				fflush((FILE*)NULL);
 				if(is_possible_cell(ans[j],col,n1[i]))
 				{
 					k++;rtn=j;
@@ -512,8 +528,8 @@ void rowate(int row)
 	//based on rowate
 	if(is_row_full(row))
 		return;
-	int ans[9]={800,800,800,800,800,800,800,800,800};
-	int n1[9]= {1,2,3,4,5,6,7,8,9};
+	int ans[10]={800,800,800,800,800,800,800,800,800,800};
+	int n1[10]= {1,2,3,4,5,6,7,8,9,800};
 	int *tmp=ans;
 	int change=1;
 	for(int i=0;i<9;i++)
@@ -523,7 +539,7 @@ void rowate(int row)
 			tmp++;
 		}
 		else
-			n1[matrix[row][i] -1]==800;
+			n1[matrix[row][i] -1]=800;
 	//can avoid this sorting is not requried 
 	//but if we sort we can put all 800 values 
 	//at end and during actual evaluation we
@@ -545,8 +561,10 @@ void rowate(int row)
 			if(n1[i]==999)
 				continue;
 			k=0;
-			for(int j=0;ans[j]==800;j++)
+			for(int j=0;ans[j]!=800;j++)
 			{
+				if(ans[i]==900)
+					continue;
 				if(is_possible_cell(row,ans[j],n1[i]))
 				{
 					k++;rtn=j;
@@ -557,7 +575,7 @@ void rowate(int row)
 			if(k==1)
 			{
 				insert_matrix(row,ans[rtn],n1[i]);
-				ans[rtn]=999;n1[i]=999;				
+				ans[rtn]=900;n1[i]=999;				
 				change=1;
 			}
 		}
@@ -570,7 +588,7 @@ void blockate(int block_n)
 {
 	//try to fill missing elements 
 	//based on missing values from 
-	int ans[9]={1,2,3,4,5,6,7,8,9 };
+	int ans[10]={1,2,3,4,5,6,7,8,9,800 };
 	//remove elements based on block index and call
 	int row,col,row_max,col_max;
 	gen_row_col_block(&row,&col,0,block_n);
@@ -599,18 +617,18 @@ void print_success()
 	printf("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ");
 	return;
 }
-void main()
+int main()
 {
 	printf("welcome to sudoku...");
-	int count,count_prev;
-	count=init_setup();
-	count_prev=count;
+	int count_prev;
+	global_count=init_setup();
+	count_prev=global_count;
 	//loop is designed to terminate if all blocks are full or if a 
 	//single itreation did not contribute even a single value to
 	//sudoku....
 	do{
 	
-		count_prev=count;
+		count_prev=global_count;
 		//important code should sit here...
 		//call stablilze in spiral order 
 		for(int i=0;i<9;i++)
@@ -635,12 +653,13 @@ void main()
 		for(int i=0;i<9;i++)
 			if(!is_block_full(i))
 				blockate(i);	
-		if(count==81)
+		if(global_count==81)
 		{
 			print_success();
-			return;
+			return 0;	
 		}
 		
-	}while(count>count_prev);
+	}while(global_count>count_prev);
 	printf("the program has failed to solve sudoku...");
+	return 0;
 }
