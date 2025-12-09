@@ -9,7 +9,7 @@
 #define MAX_COL_COUNT 9
 
 int matrix[MAX_ROW_COUNT][MAX_COL_COUNT]=
-{{0,7,0,5,8,3,0,2,0},{0,5,0,2,0,0,3,0,0},{3,4,0,0,0,6,5,0,7},{7,9,0,0,0,0,6,3,2},{0,0,0,6,9,7,1,0,0},{6,8,0,0,0,2,7,0,0},{9,1,0,8,3,5,0,7,6},{0,3,0,7,0,1,4,9,5},{5,6,0,4,2,9,0,1,3}
+{{9,0,0,0,4,0,7,8,0},{0,7,3,9,2,1,6,0,5},{5,0,1,0,8,0,3,0,2},{0,3,5,2,0,8,0,6,7},{2,0,9,4,7,6,5,0,3},{7,1,0,5,0,3,8,2,0},{6,0,4,0,3,0,1,0,8},{1,0,7,8,5,4,2,3,0},{0,5,8,0,6,0,0,0,9}
 };
 uint16_t top_bar[MAX_SIZE];
 int global_count=0;
@@ -35,6 +35,18 @@ void rowate(int row);
 void colate(int col);
 void blockate(int block_n);
 
+int get_len(int* array);
+int get_len(int* array)
+{
+	int rtn_val=0;
+	while(*array!=800)
+	{
+		array++;
+		rtn_val++;
+	}
+	printf("call to get_len:%d\n",rtn_val);
+	return rtn_val;
+}
 void unset_value_gen(int row,int col,int val)
 {
 	//this function unsets all the values in top bar in all 
@@ -134,10 +146,13 @@ int  init_setup()
 }
 bool is_possible_cell(int row,int col,int value)
 {
+	printf("is_possible_cell called on %d %d %d\n",row,col,value);
 	uint16_t syndrome=top_bar[(row*9)+col];
+	printf("syndrome:0x%x\n",syndrome);
 	uint16_t target=0x01;
 	target<<=(value-1);
-	if(syndrome & value)
+	printf("target:0x%x\n",target);
+	if(syndrome & target)
 		return true;
 	return false;
 }
@@ -188,7 +203,9 @@ void swap(int i,int j,int* array)
 
 void insert_matrix(int row,int col,int val)
 {
-	//is_possible(int row,int col,int val);
+	//if(!is_possible(row,col,val))
+	//	return;
+	printf("calling insert matrix on %d %d %d\n",row,col,val);
 	unset_value_gen(row,col,val);
 	matrix[row][col]=val;
 	global_count++;
@@ -305,7 +322,16 @@ void fill_block_on_array(int* ans,int block_n)
 	int n2[10]={800,800,800,800,800,800,800,800,800,800}; //chg#15
 	int row,col;
 	get_blank_block(block_n,n2);
-	int count=0,change=1,rtn;
+	int count=0,change=1,rtn,u;
+	if(get_len(n2)==1 && get_len(ans)==1)
+	{
+		int row,col;gen_row_col_block(&row,&col,n2[0],block_n);
+		if(is_possible(row,col,ans[0]))
+		{	
+			insert_matrix(row,col,ans[0]);
+			return;
+		}
+	}
 	while(change)
 	{
 		change=0;
@@ -324,7 +350,7 @@ void fill_block_on_array(int* ans,int block_n)
 				gen_row_col_block(&row,&col,n2[j],block_n);
 				if(is_possible(row,col,ans[i]))
 				{
-					count++;rtn=j;
+					count++;rtn=j;u=i;
 					if(count >1)
 						break;
 				}		
@@ -336,9 +362,9 @@ void fill_block_on_array(int* ans,int block_n)
 				//the block and it is  in n1[rtn]
 				gen_row_col_block(&row,&col,n2[rtn],block_n);
 
-				is_possible_cell(row,col,ans[i]);
-				insert_matrix(row,col,ans[i]);
-				ans[i]=999;n2[rtn]=999;
+				is_possible_cell(row,col,ans[u]);
+				insert_matrix(row,col,ans[u]);
+				ans[u]=999;n2[rtn]=999;
 				change=1;	//shows that atleast one value was added in this attempt
 				
 			}
@@ -463,6 +489,7 @@ void colate(int col)
 {
 	//try to fill missing
 	//elements based on column
+	printf("calling colate on col:%d\n",col);
 	if(is_col_full(col))
 		return;
 	int ans[10]={800,800,800,800,800,800,800,800,800,800};	//one elem extra to mark end for both chg#13
@@ -489,7 +516,14 @@ void colate(int col)
 	//n1 contains  all possible values
 	//the job is to try to fill missing blocks with
 	//missing values
-	int k,rtn;
+	
+	if(get_len(n1)==1 && get_len(ans)==1)
+		if(is_possible(ans[0],col,n1[0]))
+		{
+			insert_matrix(ans[0],col,n1[0]);
+			return;
+		}
+	int k,rtn,u;
 	while(change)
 	{
 		change=0;
@@ -506,15 +540,16 @@ void colate(int col)
 				fflush((FILE*)NULL);
 				if(is_possible_cell(ans[j],col,n1[i]))
 				{
-					k++;rtn=j;
+					printf("true\n");
+					k++;rtn=j;u=i;
 					if(k>1)
 						break;
 				}
 			}
 			if(k==1)
 			{
-				insert_matrix(ans[rtn],col,n1[i]);
-				ans[rtn]=900;n1[i]=999;				
+				insert_matrix(ans[rtn],col,n1[u]);
+				ans[rtn]=900;n1[u]=999;				
 				change=1;
 			}
 		}
@@ -526,6 +561,7 @@ void rowate(int row)
 {
 	//try to fill missing elements 
 	//based on rowate
+	printf("calling rowate on row:%d\n",row);
 	if(is_row_full(row))
 		return;
 	int ans[10]={800,800,800,800,800,800,800,800,800,800};
@@ -552,7 +588,13 @@ void rowate(int row)
 	//n1 contains  all possible values
 	//the job is to try to fill missing blocks with
 	//missing values
-	int k,rtn;
+	if(get_len(ans)==1 && get_len(n1)==1)
+		if(is_possible(row,ans[0],n1[0]))
+		{
+			insert_matrix(row,ans[0],n1[0]);
+			return;
+		}
+	int k,rtn,u;
 	while(change)
 	{
 		change=0;
@@ -563,19 +605,20 @@ void rowate(int row)
 			k=0;
 			for(int j=0;ans[j]!=800;j++)
 			{
-				if(ans[i]==900)
+				if(ans[j]==900)
 					continue;
 				if(is_possible_cell(row,ans[j],n1[i]))
 				{
-					k++;rtn=j;
+					printf(":True\n");
+					k++;rtn=j;u=i;
 					if(k>1)
 						break;
 				}
 			}
 			if(k==1)
 			{
-				insert_matrix(row,ans[rtn],n1[i]);
-				ans[rtn]=900;n1[i]=999;				
+				insert_matrix(row,ans[rtn],n1[u]);
+				ans[rtn]=900;n1[u]=999;				
 				change=1;
 			}
 		}
@@ -588,6 +631,7 @@ void blockate(int block_n)
 {
 	//try to fill missing elements 
 	//based on missing values from 
+	printf("calling blocate on block:%d\n",block_n);
 	int ans[10]={1,2,3,4,5,6,7,8,9,800 };
 	//remove elements based on block index and call
 	int row,col,row_max,col_max;
@@ -605,21 +649,23 @@ void blockate(int block_n)
 	
 }
 
-void print_success()
+void print_matrix()
 {
-	printf("puzzle solved!");
+	printf("MATRIX CURRENT STATE:\n");
 	for(int i=0;i<MAX_ROW_COUNT;i++)
 	{
-		printf("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ");
+		printf("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n ");
 		for(int j=0;j<MAX_COL_COUNT;j++)
 			printf("%d|",matrix[i][j]);
+		printf("\n");
 	}
-	printf("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ");
+	printf("_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n");
 	return;
 }
 int main()
 {
 	printf("welcome to sudoku...");
+	print_matrix();
 	int count_prev;
 	global_count=init_setup();
 	count_prev=global_count;
@@ -655,10 +701,12 @@ int main()
 				blockate(i);	
 		if(global_count==81)
 		{
-			print_success();
+			printf("success\n");
+			print_matrix();
 			return 0;	
 		}
-		
+		else
+			print_matrix();	
 	}while(global_count>count_prev);
 	printf("the program has failed to solve sudoku...");
 	return 0;
