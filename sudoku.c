@@ -15,7 +15,11 @@ int matrix[MAX_ROW_COUNT][MAX_COL_COUNT]=
 /*{{0,3,0,8,0,2,0,0,0},{6,8,5,0,9,7,3,0,2},{1,0,7,0,3,0,0,0,8},{0,0,1,3,0,6,0,8,0},{2,4,3,0,5,0,7,6,1},{0,9,0,7,0,1,2,0,0},{9,0,0,0,7,0,4,0,6},{3,0,2,6,8,0,5,1,9},{0,0,0,2,0,9,0,7,0}};*/
 /*{{0,0,0,0,0,6,0,8,0},{0,0,9,1,0,5,3,7,2},{0,8,0,7,0,0,0,1,6},{0,0,0,0,0,0,0,3,4},{0,0,0,3,5,1,0,0,0},{7,3,0,0,0,0,0,0,0},{6,1,0,0,0,8,0,2,0},{8,2,3,9,0,4,6,0,0},{0,7,0,6,0,0,0,0,0}};*/
 /*{{6,2,9,7,8,1,5,4,3},{3,0,8,0,0,5,7,0,2},{0,5,0,0,2,0,0,1,0},{0,7,5,4,0,2,0,0,1},{0,6,0,8,3,0,0,0,5},{2,0,0,5,0,6,0,8,7},{7,0,0,2,5,0,0,3,0},{0,3,4,0,0,8,2,7,0},{1,0,0,3,0,0,8,0,0}};*/
-{{0,0,0,0,7,0,1,0,0},{0,0,0,5,6,0,0,0,0},{0,8,0,0,2,0,0,3,0},{0,0,0,0,0,0,4,9,0},{0,4,0,2,5,0,0,0,8},{5,0,0,9,0,0,0,0,6},{4,0,6,0,0,0,0,0,0},{2,0,0,0,0,0,0,0,0},{7,0,0,1,9,0,8,0,0}};
+/*{{0,0,0,0,7,0,1,0,0},{0,0,0,5,6,0,0,0,0},{0,8,0,0,2,0,0,3,0},{0,0,0,0,0,0,4,9,0},{0,4,0,2,5,0,0,0,8},{5,0,0,9,0,0,0,0,6},{4,0,6,0,0,0,0,0,0},{2,0,0,0,0,0,0,0,0},{7,0,0,1,9,0,8,0,0}};*/
+/*{{0,0,6,0,0,0,0,0,3},{8,0,0,5,0,0,0,0,2},{0,3,0,0,0,4,6,9,0},{9,0,0,6,2,0,0,1,0},{6,4,0,8,0,0,0,2,0},{2,0,8,0,5,0,9,0,0},{0,0,0,0,0,0,0,0,0},{0,0,0,2,4,0,0,0,0},{0,0,4,9,1,0,0,0,0}};*/
+/*{{0,0,5,0,0,0,1,0,0},{0,7,0,5,0,1,3,2,0},{0,6,0,0,0,0,7,0,0},{0,0,0,9,4,3,0,0,0},{8,0,0,2,0,0,0,0,9},{9,2,4,0,7,0,0,1,0},{0,0,0,0,0,4,0,0,5},{5,4,0,1,0,9,0,0,0},{0,0,6,0,0,2,0,4,1}};*/
+/*{{0,0,0,0,0,0,2,0,0},{0,8,0,0,0,7,0,9,0},{6,0,2,0,0,0,5,0,0},{0,7,0,0,6,0,0,0,0},{0,0,0,9,0,1,0,0,0},{0,0,0,0,2,0,0,4,0},{0,0,5,0,0,0,6,0,3},{0,9,0,4,0,0,0,7,0},{0,0,6,0,0,0,0,0,0}};*/
+{{9,0,0,4,0,3,5,0,0},{0,8,6,0,2,0,0,1,9},{7,0,0,8,0,0,0,4,0},{3,0,0,0,7,0,0,0,2},{5,2,0,0,9,0,6,8,0},{0,0,1,5,0,0,0,3,0},{2,0,8,1,5,0,7,0,0},{0,7,0,0,0,0,0,9,0},{0,3,0,0,0,0,4,0,1}};
 uint16_t top_bar[MAX_SIZE];
 int global_count=0;
 
@@ -50,7 +54,7 @@ int get_len(int* array)
 		array++;
 		rtn_val++;
 	}
-	printf("call to get_len:%d\n",rtn_val);
+//	printf("call to get_len:%d\n",rtn_val);
 	return rtn_val;
 }
 void unset_value_gen(int row,int col,int val)
@@ -152,12 +156,12 @@ int  init_setup()
 }
 bool is_possible_cell(int row,int col,int value)
 {
-	printf("is_possible_cell called on %d %d %d\n",row,col,value);
+//	printf("is_possible_cell called on %d %d %d\n",row,col,value);
 	uint16_t syndrome=top_bar[(row*9)+col];
-	printf("syndrome:0x%x\n",syndrome);
+//	printf("syndrome:0x%x\n",syndrome);
 	uint16_t target=0x01;
 	target<<=(value-1);
-	printf("target:0x%x\n",target);
+//	printf("target:0x%x\n",target);
 	if(syndrome & target)
 		return true;
 	return false;
@@ -211,7 +215,7 @@ void insert_matrix(int row,int col,int val)
 {
 	if(!is_possible_cell(row,col,val))
 		return;
-	printf("calling insert matrix on %d %d %d\n",row,col,val);
+//	printf("calling insert matrix on %d %d %d\n",row,col,val);
 	unset_value_gen(row,col,val);
 	matrix[row][col]=val;
 	global_count++;
@@ -252,11 +256,11 @@ bool is_possible(int row,int col,int val)
 		if(matrix[i][col]==val)
 			return false;
 	}
-	int row_max=((int) row/3)*3;
-	int col_max=((int)col/3)*3;
-	row_max+=3;col_max+=3; //set value to upper bounds 
-	for(int i=0;i<row;i++)
-		for(int j=0;j<col;j++)
+	row=((int) row/3)*3;
+	col=((int)col/3)*3;
+	int row_max=row+3;int col_max=col+3; //set value to upper bounds 
+	for(int i=row;i<row_max;i++)
+		for(int j=col;j<col_max;j++)
 			if(matrix[i][j]== val)
 				return false;
 	return true;
@@ -495,7 +499,7 @@ void colate(int col)
 {
 	//try to fill missing
 	//elements based on column
-	printf("calling colate on col:%d\n",col);
+//	printf("calling colate on col:%d\n",col);
 	if(is_col_full(col))
 		return;
 	int ans[10]={800,800,800,800,800,800,800,800,800,800};	//one elem extra to mark end for both chg#13
@@ -575,7 +579,7 @@ void colate(int col)
 				fflush((FILE*)NULL);
 				if(is_possible_cell(ans[j],col,n1[i]))
 				{
-					printf("true\n");
+				//	printf("true\n");
 					k++;rtn=j;u=i;
 					if(k>1)
 						break;
@@ -639,7 +643,7 @@ void rowate(int row)
 {
 	//try to fill missing elements 
 	//based on rowate
-	printf("calling rowate on row:%d\n",row);
+//	printf("calling rowate on row:%d\n",row);
 	if(is_row_full(row))
 		return;
 	int ans[10]={800,800,800,800,800,800,800,800,800,800};
@@ -721,7 +725,7 @@ void rowate(int row)
 					continue;
 				if(is_possible_cell(row,ans[j],n1[i]))
 				{
-					printf(":True\n");
+				//	printf(":True\n");
 					k++;rtn=j;u=i;
 					if(k>1)
 						break;
@@ -743,7 +747,7 @@ void blockate(int block_n)
 {
 	//try to fill missing elements 
 	//based on missing values from 
-	printf("calling blocate on block:%d\n",block_n);
+//	printf("calling blocate on block:%d\n",block_n);
 	int ans[10]={1,2,3,4,5,6,7,8,9,800 };
 	//remove elements based on block index and call
 	int row,col,row_max,col_max;
