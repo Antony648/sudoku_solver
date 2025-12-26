@@ -9,8 +9,13 @@
 #define MAX_COL_COUNT 9
 
 int matrix[MAX_ROW_COUNT][MAX_COL_COUNT]=
-{{9,0,0,0,4,0,7,8,0},{0,7,3,9,2,1,6,0,5},{5,0,1,0,8,0,3,0,2},{0,3,5,2,0,8,0,6,7},{2,0,9,4,7,6,5,0,3},{7,1,0,5,0,3,8,2,0},{6,0,4,0,3,0,1,0,8},{1,0,7,8,5,4,2,3,0},{0,5,8,0,6,0,0,0,9}
-};
+/*{{9,0,0,0,4,0,7,8,0},{0,7,3,9,2,1,6,0,5},{5,0,1,0,8,0,3,0,2},{0,3,5,2,0,8,0,6,7},{2,0,9,4,7,6,5,0,3},{7,1,0,5,0,3,8,2,0},{6,0,4,0,3,0,1,0,8},{1,0,7,8,5,4,2,3,0},{0,5,8,0,6,0,0,0,9}
+};*/
+/*{{6,8,0,4,0,3,0,5,0},{4,0,2,0,5,0,3,6,8},{5,9,3,6,7,8,0,0,4},{0,1,7,2,8,6,9,4,5},{8,0,9,5,0,4,2,0,7},{2,5,4,3,9,7,8,1,0},{7,0,0,8,3,1,5,9,2},{9,3,5,0,6,0,4,0,1},{0,2,0,9,0,5,0,7,3}};*/
+/*{{0,3,0,8,0,2,0,0,0},{6,8,5,0,9,7,3,0,2},{1,0,7,0,3,0,0,0,8},{0,0,1,3,0,6,0,8,0},{2,4,3,0,5,0,7,6,1},{0,9,0,7,0,1,2,0,0},{9,0,0,0,7,0,4,0,6},{3,0,2,6,8,0,5,1,9},{0,0,0,2,0,9,0,7,0}};*/
+/*{{0,0,0,0,0,6,0,8,0},{0,0,9,1,0,5,3,7,2},{0,8,0,7,0,0,0,1,6},{0,0,0,0,0,0,0,3,4},{0,0,0,3,5,1,0,0,0},{7,3,0,0,0,0,0,0,0},{6,1,0,0,0,8,0,2,0},{8,2,3,9,0,4,6,0,0},{0,7,0,6,0,0,0,0,0}};*/
+/*{{6,2,9,7,8,1,5,4,3},{3,0,8,0,0,5,7,0,2},{0,5,0,0,2,0,0,1,0},{0,7,5,4,0,2,0,0,1},{0,6,0,8,3,0,0,0,5},{2,0,0,5,0,6,0,8,7},{7,0,0,2,5,0,0,3,0},{0,3,4,0,0,8,2,7,0},{1,0,0,3,0,0,8,0,0}};*/
+{{0,0,0,0,7,0,1,0,0},{0,0,0,5,6,0,0,0,0},{0,8,0,0,2,0,0,3,0},{0,0,0,0,0,0,4,9,0},{0,4,0,2,5,0,0,0,8},{5,0,0,9,0,0,0,0,6},{4,0,6,0,0,0,0,0,0},{2,0,0,0,0,0,0,0,0},{7,0,0,1,9,0,8,0,0}};
 uint16_t top_bar[MAX_SIZE];
 int global_count=0;
 
@@ -24,6 +29,7 @@ void swap(int i,int j,int* array);
 void insert_matrix(int row,int col,int val);
 bool is_possible(int row,int col,int val);
 bool is_possible_cell(int row,int col,int val);
+bool is_parity_2(uint16_t syndrome);
 
 int get_block_array(int block_n,int* array,int r,int c);
 void  get_blank_block(int block_n,int* array);
@@ -203,8 +209,8 @@ void swap(int i,int j,int* array)
 
 void insert_matrix(int row,int col,int val)
 {
-	//if(!is_possible(row,col,val))
-	//	return;
+	if(!is_possible_cell(row,col,val))
+		return;
 	printf("calling insert matrix on %d %d %d\n",row,col,val);
 	unset_value_gen(row,col,val);
 	matrix[row][col]=val;
@@ -494,16 +500,45 @@ void colate(int col)
 		return;
 	int ans[10]={800,800,800,800,800,800,800,800,800,800};	//one elem extra to mark end for both chg#13
 	int n1[10]= {1,2,3,4,5,6,7,8,9,800};
+	int parity_rows[]={800,800,800,800,800,800,800,800,800,800};	
+	int *parity_row_ptr=parity_rows;
 	int *tmp=ans;
 	int change=1;
 	for(int i=0;i<9;i++)
 		if(!matrix[i][col])
 		{
-			*tmp=i;
-			tmp++;
+			if(!is_parity_2(top_bar[i*9+col]))
+			{
+				*tmp=i;
+				tmp++;
+			}
+			else
+			{
+				for(int j=0;parity_rows[j]!=800;j++)
+				{
+					if(parity_rows[j]==900)
+						continue;
+					if(top_bar[i*9+col]==top_bar[parity_rows[j]*9+col])
+					{
+						n1[matrix[i][col]]=800;
+						n1[matrix[parity_rows[j]][col]]=800;
+						parity_rows[j]=900;
+						break;
+					}
+				}
+				*parity_row_ptr=i;
+				parity_row_ptr++;
+			}
 		}
 		else
 			n1[matrix[i][col] -1]=800;
+	for(int j=0;parity_rows[j]!=800;j++)
+	{
+		if(parity_rows[j]==900)
+			continue;
+		*tmp=parity_rows[j];
+		tmp++;
+	}
 	//can avoid this sorting is not requried 
 	//but if we sort we can put all 800 values 
 	//at end and during actual evaluation we
@@ -518,7 +553,7 @@ void colate(int col)
 	//missing values
 	
 	if(get_len(n1)==1 && get_len(ans)==1)
-		if(is_possible(ans[0],col,n1[0]))
+		if(is_possible_cell(ans[0],col,n1[0]))
 		{
 			insert_matrix(ans[0],col,n1[0]);
 			return;
@@ -557,6 +592,49 @@ void colate(int col)
 	return;
 	
 }
+bool is_parity_2(uint16_t value)
+{
+	if(!value)
+		return false;
+	if(!(value & (value-1)))
+		return false;
+	int comp=value & (value-1);
+	if(!comp &(comp-1))	
+		return true;
+	return false;
+}
+/*
+void naked_pairs_row(int* values,int* cells,int row)
+{
+	//find top bar values of a row that have 
+	//parity 2  and then try to find similar 
+	//values from them...
+	
+	uint16_t syndrome;
+	uint16_t syndrome2;	
+	int parity_cols[]={0,0,0,0,0,0,0,0,0,0};
+	int* parity_ptr=parity_cols;
+	for(int col=0;cells[col]!=800;col++)
+	{
+		syndrome=top_bar[(row*9)+col];
+		if(is_parity_2(syndrome))
+		{
+			*parity_ptr=col;
+			parity_ptr++;
+		}
+	}
+	for(int i=0;parity_cols[i];i++)
+		for(int j=i+1;parity_cols[j];j++)
+		{
+			syndrome=top_bar[(row*9)+parity_cols[i]];
+			syndrome2=top_bar[(row*9)+parity_cols[j]];
+			if(syndrome==syndrome2)
+			{
+				//get values from syndromes replace it with 800 in values
+				//get cell from parity_cols[i] parity_cols[j] and set those values to 900
+			}
+		}
+}*/
 void rowate(int row)
 {
 	//try to fill missing elements 
@@ -566,16 +644,50 @@ void rowate(int row)
 		return;
 	int ans[10]={800,800,800,800,800,800,800,800,800,800};
 	int n1[10]= {1,2,3,4,5,6,7,8,9,800};
+	int parity_cols[]={800,800,800,800,800,800,800,800,800,800};
+	int *parity_cols_ptr=parity_cols;
 	int *tmp=ans;
 	int change=1;
 	for(int i=0;i<9;i++)
 		if(!matrix[row][i])
-		{
-			*tmp=i;
-			tmp++;
+		{		
+			//could implement naked pair logic here if refactored
+			if(!is_parity_2(top_bar[(row*9)+i]))
+			{
+				*tmp=i;
+				tmp++;
+			}
+			else
+			{
+				//potential naked pair
+				//find a existing pair
+				for(int j=0;parity_cols[j]!=800;j++)
+				{
+					if(parity_cols[j]==900)
+						continue;
+					if(top_bar[(row*9)+i]==top_bar[(row*9)+parity_cols[j]])
+					{
+						n1[matrix[row][i]-1]=800;
+						n1[matrix[row][parity_cols[j]]-1]=800;
+						parity_cols[j]=900;
+						break;
+					}
+				}	
+				//if pair not found quarentine
+				*parity_cols_ptr=i;
+				parity_cols_ptr++;
+			}
 		}
 		else
 			n1[matrix[row][i] -1]=800;
+	//after all add quarentined columns
+	for(int j=0;parity_cols[j]!=800;j++)
+	{
+		if(parity_cols[j]==900)
+			continue;
+		*tmp=parity_cols[j];
+		tmp++;
+	}
 	//can avoid this sorting is not requried 
 	//but if we sort we can put all 800 values 
 	//at end and during actual evaluation we
@@ -589,7 +701,7 @@ void rowate(int row)
 	//the job is to try to fill missing blocks with
 	//missing values
 	if(get_len(ans)==1 && get_len(n1)==1)
-		if(is_possible(row,ans[0],n1[0]))
+		if(is_possible_cell(row,ans[0],n1[0]))
 		{
 			insert_matrix(row,ans[0],n1[0]);
 			return;
@@ -648,7 +760,6 @@ void blockate(int block_n)
 	return;
 	
 }
-
 void print_matrix()
 {
 	printf("MATRIX CURRENT STATE:\n");
