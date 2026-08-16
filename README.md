@@ -2,7 +2,9 @@ Sudoku solver
 
 this is a basic sudoku solver that uses constrain propagative logic  
 current implementation can only solve beginner to slight intermediate problems
-have added normal sudoku techniques(beginner) and naked pair(beginner -slight intermediate)
+have added normal sudoku techniques(beginner) and naked pair(beginner -slight intermediate) partially...
+implementation of naked pair detection in blocks have not been implemented yet.
+
 
 the solver has a record called top bar that for each cell provides the information 
 regarding what values can reside in what blocks...
